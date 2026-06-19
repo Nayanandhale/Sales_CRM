@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Udyogwardhini CRM</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-wrap">
+    <div class="login-left">
+      <div class="login-left-brand">
+        <img src="logo.png" alt="Udyogwardhini" style="height:48px;width:auto;object-fit:contain"/>
+      </div>
+      <div class="login-hero">
+        <h1>Welcome Back,<br>to your CRM workspace.</h1>
+        <p>Track every lead, nurture every opportunity, and convert every possibility into success.</p>
+      </div>
+    </div>
+    <div class="login-right">
+      <h2>Sign in to Udyogwardhini CRM</h2>
+      <div class="mb-3"><label class="form-label">Username</label><input type="text" id="login-user" class="form-control"/></div>
+      <div class="mb-3"><label class="form-label">Password</label><input type="password" id="login-pass" class="form-control" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="mb-3"><label class="form-label">Login As</label>
+        <select id="login-role" class="form-select"><option value="admin">Admin</option><option value="agent">Agent</option></select>
+      </div>
+      <button class="btn-primary-o w-100" style="justify-content:center;padding:10px" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app-shell" style="display:none">
+<div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-inner">
+    <div class="sidebar-brand" style="padding:10px 14px 8px;border-bottom:1px solid rgba(255,255,255,0.06);justify-content:center">
+      <img src="logo.png" alt="Udyogwardhini" style="height:40px;width:auto;max-width:180px;object-fit:contain"/>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="sb-avatar">AD</div>
+        <div style="flex:1;min-width:0"><div class="user-name" id="sb-name">Admin</div><div class="user-role" id="sb-role">Super Admin</div></div>
+        <button class="tbl-action" onclick="doLogout()" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="main-content" class="main-content">
+  <div class="topbar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="topbar-date"></div>
+    </div>
+  </div>
+
+  <!-- ════ DASHBOARD ════ -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Dashboard</h4><small>Real-time overview</small></div>
+        <div class="page-header-actions">
+          <select id="dash-course-filter" class="form-select form-select-sm" style="width:200px" onchange="renderDashboard()"><option value="">All Courses</option></select>
+          <input type="date" id="dash-from" class="form-control form-control-sm" style="width:130px" onchange="renderDashboard()"/>
+          <span style="font-size:12px;color:var(--text-secondary)">to</span>
+          <input type="date" id="dash-to" class="form-control form-control-sm" style="width:130px" onchange="renderDashboard()"/>
+          <button class="btn-sm-o" onclick="resetDashDates()"><i class="fa-solid fa-rotate-left"></i></button>
+        </div>
+      </div>
+      <div class="row g-3 mb-4" id="dash-kpi-cards"></div>
+      <div class="card-panel mb-4">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fa-solid fa-graduation-cap" style="color:var(--orange)"></i> Course Performance Tracker</div>
+          <small style="color:var(--text-secondary);font-size:11px">Courses with activity in selected range</small>
+        </div>
+        <div class="row g-3" id="dash-course-tracker"></div>
+      </div>
+      <div class="card-panel">
+        <div class="panel-header">
+          <div class="panel-title" id="dash-agent-perf-title"><i class="fa-solid fa-users" style="color:var(--orange)"></i> Agent Performance</div>
+          <div class="d-flex gap-2 align-items-center flex-wrap" id="dash-agent-search-wrap">
+            <input type="text" id="dash-agent-search" class="form-control form-control-sm" style="width:140px" placeholder="Search agent..." oninput="renderDashboard()"/>
+            <button class="btn-sm-o" onclick="exportAgentPerf()"><i class="fa-solid fa-download"></i> CSV</button>
+          </div>
+        </div>
+        <div class="perf-table-wrap">
+          <table class="perf-table" id="dash-agent-table">
+            <thead><tr>
+              <th onclick="sortAgentTable('name')">Agent</th>
+              <th onclick="sortAgentTable('admissions')">Admissions</th>
+              <th onclick="sortAgentTable('interested')">Pipeline</th>
+              <th onclick="sortAgentTable('revenue')">Revenue</th>
+              <th onclick="sortAgentTable('leads')">Total Leads</th>
+              <th onclick="sortAgentTable('conv')">Conversion</th>
+            </tr></thead>
+            <tbody id="dash-agent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ LEADS ════ -->
+  <div id="page-leads" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Leads</h4><small id="leads-count-label">All leads</small></div>
+        <div class="page-header-actions">
+          <button class="btn-sm-o" onclick="exportLeads()"><i class="fa-solid fa-download"></i> CSV</button>
+          <button class="btn-primary-o" onclick="openLeadModal()"><i class="fa-solid fa-plus"></i> Add Lead</button>
+        </div>
+      </div>
+      <div class="filter-bar" id="leads-filter-bar">
+        <input type="text" id="lead-search" placeholder="Search name/phone..." oninput="leadPage=1;renderLeads()" style="width:155px"/>
+        <select id="lead-course" onchange="leadPage=1;renderLeads()"><option value="">All Courses</option></select>
+        <select id="lead-status-filter" onchange="leadPage=1;renderLeads()">
+          <option value="">All Status</option>
+          <option>New</option><option>Interested</option><option>Not Interested</option><option>Admitted</option>
+        </select>
+        <select id="lead-source" onchange="leadPage=1;renderLeads()"><option value="">All Sources</option><option>Webinar</option><option>Inbound Enquiry</option><option>Operations</option><option>Referral</option><option>Seminar</option><option>Affiliate</option><option>Other</option></select>
+        <span id="lead-agent-wrap"><select id="lead-agent" onchange="leadPage=1;renderLeads()"><option value="">All Agents</option></select></span>
+        <input type="date" id="lead-from" onchange="leadPage=1;renderLeads()" title="From date"/>
+        <input type="date" id="lead-to" onchange="leadPage=1;renderLeads()" title="To date"/>
+        <button class="btn-sm-o" onclick="clearLeadFilters()"><i class="fa-solid fa-xmark"></i> Clear</button>
+      </div>
+      <div class="mb-2 d-flex gap-2 align-items-center" id="lead-bulk-bar" style="display:none!important">
+        <span id="lead-sel-count" style="font-size:12px;color:var(--text-secondary)">0 selected</span>
+        <select id="lead-bulk-agent" class="form-select form-select-sm" style="width:160px"><option value="">Assign to agent...</option></select>
+        <button class="btn-sm-o" onclick="bulkAssignLeads()"><i class="fa-solid fa-user-plus"></i> Assign</button>
+        <button class="btn-danger-sm" onclick="bulkDeleteLeads()"><i class="fa-solid fa-trash"></i> Delete</button>
+      </div>
+      <div class="table-wrap">
+        <table class="main-tbl" id="leads-table">
+          <thead id="leads-thead"></thead>
+          <tbody id="leads-tbody"></tbody>
+        </table>
+      </div>
+      <div id="leads-pagination"></div>
+    </div>
+  </div>
+
+  <!-- ════ ADMISSIONS ════ -->
+  <div id="page-admissions" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Admissions</h4><small>Enrolled students tracker</small></div>
+        <div class="page-header-actions">
+          <button class="btn-sm-o" onclick="exportAdmissions()"><i class="fa-solid fa-download"></i> CSV</button>
+          <button class="btn-primary-o" onclick="openAdmModal()"><i class="fa-solid fa-plus"></i> Add Admission</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="adm-search" placeholder="Search name/phone..." oninput="admPage=1;renderAdmissions()" style="width:155px"/>
+        <select id="adm-course" onchange="admPage=1;renderAdmissions()"><option value="">All Courses</option></select>
+        <select id="adm-batch" onchange="admPage=1;renderAdmissions()"><option value="">All Batches</option></select>
+        <select id="adm-status" onchange="admPage=1;renderAdmissions()"><option value="">All Status</option><option>Active</option><option>Completed</option><option>Dropped</option><option>On Hold</option></select>
+        <select id="adm-source" onchange="admPage=1;renderAdmissions()"><option value="">All Sources</option><option>Webinar</option><option>Inbound Enquiry</option><option>Operations</option><option>Referral</option><option>Seminar</option><option>Affiliate</option><option>Other</option></select>
+        <input type="date" id="lead-from" onchange="leadPage=1;renderLeads()" title="From date"/>
+        <input type="date" id="lead-to" onchange="leadPage=1;renderLeads()" title="To date"/>
+        <button class="btn-sm-o" onclick="clearAdmFilters()"><i class="fa-solid fa-xmark"></i> Clear</button>
+      </div>
+      <div class="row g-3 mb-3" id="adm-stat-row"></div>
+      <div class="table-wrap">
+        <table class="main-tbl">
+          <thead><tr>
+            <th>#</th><th>Student</th><th>Phone</th><th>Course</th><th>Batch</th>
+            <th>Source</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="adm-tbody"></tbody>
+        </table>
+      </div>
+      <div id="adm-pagination"></div>
+    </div>
+  </div>
+
+  <!-- ════ ALLOCATION ════ -->
+  <div id="page-allocation" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Lead Allocation</h4><small>Import, assign &amp; manage leads</small></div>
+        <div class="page-header-actions">
+          <button class="btn-sm-o" onclick="openImportModal()"><i class="fa-solid fa-file-import"></i> Import CSV</button>
+        </div>
+      </div>
+      <div class="card-panel mb-3">
+        <div class="panel-header"><div class="panel-title"><i class="fa-solid fa-chart-bar" style="color:var(--orange)"></i> Agent Workload</div></div>
+        <div class="row g-2" id="workload-cards"></div>
+      </div>
+      <div class="card-panel">
+        <div class="alloc-tabs mb-3">
+          <button class="alloc-tab active" onclick="switchAllocTab('unassigned',this)"><i class="fa-solid fa-inbox"></i> Unassigned <span class="alloc-count" id="cnt-unassigned">0</span></button>
+          <button class="alloc-tab" onclick="switchAllocTab('assigned',this)"><i class="fa-solid fa-circle-check"></i> Assigned <span class="alloc-count" id="cnt-assigned">0</span></button>
+          <button class="alloc-tab" onclick="switchAllocTab('all',this)"><i class="fa-solid fa-list"></i> All <span class="alloc-count" id="cnt-all">0</span></button>
+        </div>
+        <div class="filter-bar" style="margin-bottom:12px">
+          <input type="text" id="alloc-search" placeholder="Search name/phone..." oninput="allocPage=1;renderAllocation()"/>
+          <select id="alloc-course" onchange="allocPage=1;renderAllocation()"><option value="">All Courses</option></select>
+          <select id="alloc-agent-filter" onchange="allocPage=1;renderAllocation()"><option value="">All Agents</option></select>
+          <button class="btn-sm-o" onclick="clearAllocFilters()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+          <input type="checkbox" id="alloc-check-all" onchange="toggleAllAlloc(this)"/>
+          <span style="font-size:12px;color:var(--text-secondary)" id="alloc-sel-count">0 selected</span>
+          <select id="alloc-bulk-agent" class="form-select form-select-sm" style="width:170px"><option value="">Select agent...</option></select>
+          <label style="font-size:11.5px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="alloc-reassign"/> Allow reassign</label>
+          <button class="btn-primary-o" style="padding:5px 12px;font-size:12px" onclick="bulkAssignAlloc()"><i class="fa-solid fa-user-plus"></i> Bulk Assign</button>
+        </div>
+        <div class="table-wrap">
+          <table class="main-tbl">
+            <thead><tr>
+              <th><input type="checkbox" disabled/></th>
+              <th>#</th><th>Name</th><th>Phone</th><th>Course</th><th>Source</th>
+              <th>Assigned To</th><th>Assigned On</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="alloc-tbody"></tbody>
+          </table>
+        </div>
+        <div id="alloc-pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ AGENTS ════ -->
+  <div id="page-agents" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Agent Tracker</h4><small>Manage your sales team</small></div>
+        <div class="page-header-actions">
+          <input type="date" id="agent-from" class="form-control form-control-sm" style="width:130px" onchange="renderAgents()" title="Filter from date"/>
+          <span style="font-size:12px;color:var(--text-secondary)">to</span>
+          <input type="date" id="agent-to" class="form-control form-control-sm" style="width:130px" onchange="renderAgents()" title="Filter to date"/>
+          <button class="btn-sm-o" onclick="document.getElementById('agent-from').value='';document.getElementById('agent-to').value='';renderAgents()"><i class="fa-solid fa-rotate-left"></i></button>
+          <button class="btn-primary-o" onclick="openAgentModal()"><i class="fa-solid fa-plus"></i> Add Agent</button>
+        </div>
+      </div>
+      <div class="row g-3 mb-3" id="agent-summary-row"></div>
+      <div class="row g-3" id="agent-cards"></div>
+    </div>
+  </div>
+
+  <!-- ════ WEBINARS ════ -->
+  <div id="page-webinars" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Webinars</h4><small>Schedule &amp; manage webinars</small></div>
+        <div class="page-header-actions">
+          <button class="btn-primary-o" onclick="openWebinarModal()"><i class="fa-solid fa-plus"></i> Add Webinar</button>
+        </div>
+      </div>
+      <div class="row g-3" id="webinar-cards"></div>
+    </div>
+  </div>
+
+  <!-- ════ BATCHES ════ -->
+  <div id="page-batches" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Batch Schedule</h4><small>Manage course batches</small></div>
+        <div class="page-header-actions">
+          <button class="btn-primary-o" onclick="openBatchModal()"><i class="fa-solid fa-plus"></i> Add Batch</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <select id="batch-course-filter" onchange="renderBatches()"><option value="">All Courses</option></select>
+        <select id="batch-status-filter" onchange="renderBatches()"><option value="">All Status</option><option>Upcoming</option><option>Ongoing</option><option>Completed</option><option>Cancelled</option></select>
+        <input type="date" id="batch-date-filter" onchange="renderBatches()"/>
+        <button class="btn-sm-o" onclick="clearBatchFilters()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="row g-3" id="batch-cards"></div>
+    </div>
+  </div>
+
+  <!-- ════ ANALYTICS ════ -->
+  <div id="page-analytics" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Analytics</h4><small>Performance insights — filtered to active-batch courses</small></div>
+        <div class="page-header-actions" style="flex-wrap:wrap;gap:6px">
+          <select id="an-period-sel" class="form-select form-select-sm" style="width:115px" onchange="renderAnalytics()">
+            <option value="month">Monthly</option>
+            <option value="quarter">Quarterly</option>
+            <option value="year">Yearly</option>
+          </select>
+          <input type="month" id="an-month-sel" class="form-control form-control-sm" style="width:145px" onchange="renderAnalytics()"/>
+          <button class="btn-sm-o" onclick="exportAnalytics()"><i class="fa-solid fa-download"></i> Export</button>
+        </div>
+      </div>
+      <div class="row g-3 mb-3" id="an-kpi-row"></div>
+      <div class="card-panel mb-3">
+        <div class="panel-header"><div class="panel-title">Course-wise Stats <small style="font-weight:400;color:var(--text-secondary)">(active batches in period only)</small></div></div>
+        <div class="table-wrap">
+          <table class="main-tbl">
+            <thead><tr><th>Course</th><th>Leads</th><th>Pipeline</th><th>Webinars</th><th>Admissions</th><th>Revenue</th><th>Conversion%</th></tr></thead>
+            <tbody id="an-course-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-panel mb-3">
+        <div class="panel-header">
+          <div class="panel-title">Agent Performance</div>
+          <button class="btn-sm-o" onclick="exportAnalytics()"><i class="fa-solid fa-download"></i> CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table class="main-tbl">
+            <thead><tr><th>Agent</th><th>Leads</th><th>Pipeline</th><th>Admissions</th><th>Revenue</th><th>Conversion%</th></tr></thead>
+          <tbody id="an-agent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-lg-6">
+          <div class="card-panel">
+            <div class="panel-header"><div class="panel-title"><i class="fa-solid fa-location-dot" style="color:var(--orange)"></i> Top 5 Admission Locations</div></div>
+            <canvas id="an-location-chart" height="160"></canvas>
+            <div id="an-location-table" class="mt-2"></div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card-panel">
+            <div class="panel-header"><div class="panel-title"><i class="fa-solid fa-people-group" style="color:var(--orange)"></i> Admissions by Age Group</div></div>
+            <canvas id="an-age-chart" height="160"></canvas>
+            <div id="an-age-table" class="mt-2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ AGENT CALENDAR ════ -->
+  <div id="page-agent-calendar" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Calendar</h4><small>Batches, webinars &amp; your callbacks</small></div>
+        <div class="d-flex gap-2 align-items-center">
+          <button class="btn-icon" onclick="agCalNav(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+          <span id="ag-cal-label" style="font-weight:700;font-size:14px;min-width:140px;text-align:center"></span>
+          <button class="btn-icon" onclick="agCalNav(1)"><i class="fa-solid fa-chevron-right"></i></button>
+          <button class="btn-sm-o" onclick="agCalToday()">Today</button>
+        </div>
+      </div>
+      <div class="card-panel mb-3">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#FF6B00;margin-right:5px;vertical-align:middle"></span>Webinar</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2563EB;margin-right:5px;vertical-align:middle"></span>Batch Start</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#16A34A;margin-right:5px;vertical-align:middle"></span>My Callback</span>
+        </div>
+      </div>
+      <div class="cal-grid" id="ag-cal-grid"></div>
+      <div class="card-panel mt-3" id="ag-cal-day-panel" style="display:none">
+        <div class="panel-header">
+          <div class="panel-title" id="ag-cal-events-title">Events</div>
+          <button class="tbl-action" onclick="document.getElementById('ag-cal-day-panel').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="ag-cal-events-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ DAILY TRACKER ════ -->
+  <div id="page-daily" class="page">
+    <div class="page-inner">
+      <div class="page-header">
+        <div class="page-header-left"><h4>Daily Tracker</h4><small id="daily-tracker-sub">Today's activity</small></div>
+        <div class="page-header-actions">
+          <span id="daily-date-wrap"><input type="date" id="daily-date" class="form-control form-control-sm" style="width:145px" onchange="renderDaily()"/></span>
+        </div>
+      </div>
+      <div class="row g-3 mb-3" id="daily-kpi-row"></div>
+      <!-- Agent-specific: WhatsApp count logger -->
+      <div id="agent-wa-section" style="display:none" class="mb-3">
+        <div class="card-panel">
+          <div class="panel-header"><div class="panel-title"><i class="fa-brands fa-whatsapp" style="color:#25D366"></i> WhatsApp Messages Today</div></div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <label class="form-label">How many WhatsApp messages did you send today?</label>
+              <input type="number" id="agent-wa-count" class="form-control" placeholder="e.g. 15" min="0" style="max-width:160px"/>
+            </div>
+            <div>
+              <button class="btn-primary-o" onclick="saveAgentWA()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+              <div id="agent-wa-saved" style="font-size:11.5px;color:var(--green);margin-top:4px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Agent daily activity summary (course-wise) -->
+      <div id="agent-daily-summary"></div>
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="card-panel">
+            <div class="panel-header"><div class="panel-title"><i class="fa-solid fa-phone" style="color:var(--orange)"></i> <span id="daily-callbacks-title">Callbacks</span></div></div>
+            <div id="daily-callbacks"></div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card-panel">
+            <div class="panel-header">
+              <div class="panel-title"><i class="fa-solid fa-note-sticky" style="color:var(--orange)"></i> Activity Notes</div>
+              <button class="btn-sm-o" onclick="addDailyNote()"><i class="fa-solid fa-plus"></i> Add</button>
+            </div>
+            <div id="daily-notes-list"></div>
+            <textarea id="daily-note-input" class="form-control mt-2" rows="2" placeholder="Add a note for today..." style="font-size:12.5px"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ SETTINGS ════ -->
+  <div id="page-settings" class="page">
+    <div class="page-inner">
+      <div class="page-header"><div class="page-header-left"><h4>Settings</h4><small>Organisation &amp; preferences</small></div></div>
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="card-panel mb-3">
+            <div class="panel-header"><div class="panel-title"><i class="fa-solid fa-building" style="color:var(--orange)"></i> Organisation Info</div></div>
+            <div class="form-group"><label class="form-label">Organisation Name</label><input type="text" id="set-org" class="form-control"/></div>
+            <div class="form-group"><label class="form-label">Admin Name</label><input type="text" id="set-admin" class="form-control"/></div>
+            <div class="form-group"><label class="form-label">Admin Role</label><input type="text" id="set-role" class="form-control"/></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Email</label><input type="email" id="set-email" class="form-control"/></div>
+              <div class="form-group"><label class="form-label">Phone</label><input type="text" id="set-phone" class="form-control"/></div>
+            </div>
+            <button class="btn-primary-o" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
+          </div>
+
+          <div class="card-panel mb-3">
+            <div class="panel-header"><div class="panel-title"><i class="fa-solid fa-user-shield" style="color:var(--orange)"></i> Admin Accounts</div></div>
+            <div id="admin-accounts-list"></div>
+          </div>
+
+          <div class="card-panel">
+            <div class="panel-header"><div class="panel-title" style="color:var(--red)"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</div></div>
+            <p style="font-size:12.5px;color:var(--text-secondary);margin-bottom:12px">Permanently delete CRM data. Cannot be undone.</p>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn-danger-sm" onclick="clearLeadsData()"><i class="fa-solid fa-users-slash"></i> Clear Leads &amp; Admissions</button>
+              <button class="btn-danger-sm" onclick="clearAllData()"><i class="fa-solid fa-trash"></i> Clear Everything</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main-content -->
+</div><!-- end app-shell -->
+
+<!-- Global Search -->
+<div class="search-overlay" id="search-overlay" onclick="closeSearch()"></div>
+<div class="search-results" id="search-results"></div>
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ═══════ MODALS ═══════ -->
+
+<!-- Lead Modal -->
+<div class="modal fade" id="leadModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-user-plus" style="color:var(--orange)"></i>
+        <h5 class="modal-title" id="lead-modal-title">Add Lead</h5>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="lead-id"/>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Full Name *</label><input type="text" id="l-name" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Phone *</label><input type="text" id="l-phone" class="form-control"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Email</label><input type="email" id="l-email" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Source *</label>
+            <select id="l-source" class="form-select"><option value="">Select source</option><option>Webinar</option><option>Inbound Enquiry</option><option>Operations</option><option>Referral</option><option>Seminar</option><option>Affiliate</option><option>Other</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Course *</label>
+            <select id="l-course" class="form-select"><option value="">Select course</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Webinar</label><select id="l-webinar" class="form-select"><option value="">None</option></select></div>
+        </div>
+        <div class="form-row" id="lead-modal-agent-row">
+          <div class="form-group"><label class="form-label">Assign Agent</label><select id="l-agent" class="form-select"><option value="">Unassigned</option></select></div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Callback Date</label><input type="date" id="l-callback-date" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Callback Time</label><input type="time" id="l-callback-time" class="form-control"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Calls Made</label>
+          <select id="l-call-count" class="form-select">
+            <option value="0">0 — Not called yet</option>
+            <option value="1">1 — Call 1 done</option>
+            <option value="2">2 — Call 2 done</option>
+            <option value="3">3 — Call 3 done</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Remark 1</label><select id="l-r1" class="form-select" onchange="checkAdmittedRemark()"><option value="">— Select —</option><option>Not Interested</option><option>Interested</option><option>Admitted</option></select></div>
+          <div class="form-group"><label class="form-label">Remark 2</label><select id="l-r2" class="form-select" onchange="checkAdmittedRemark()"><option value="">— Select —</option><option>Not Interested</option><option>Interested</option><option>Admitted</option></select></div>
+        </div>
+        <div class="form-group"><label class="form-label">Remark 3</label><select id="l-r3" class="form-select" onchange="checkAdmittedRemark()"><option value="">— Select —</option><option>Not Interested</option><option>Interested</option><option>Admitted</option></select></div>
+        <div id="lead-admitted-fields" style="display:none;background:var(--green-pale);border:1px solid #BBF7D0;border-radius:9px;padding:14px;margin-top:4px">
+          <div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:10px"><i class="fa-solid fa-circle-check me-1"></i>Admission Details</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Mode of Payment</label><select id="l-pay-mode" class="form-select"><option value="">— Select —</option><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option><option>EMI</option></select></div>
+            <div class="form-group"><label class="form-label">Amount Paid (₹)</label><input type="number" id="l-pay-amount" class="form-control" placeholder="e.g. 8500" min="0"/></div>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><textarea id="l-notes" class="form-control" rows="2" placeholder="Add internal notes..."></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-sm-o" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-primary-o" onclick="saveLead()"><i class="fa-solid fa-floppy-disk"></i> Save Lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Admission Modal -->
+<div class="modal fade" id="admModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-graduation-cap" style="color:var(--orange)"></i>
+        <h5 class="modal-title" id="adm-modal-title">Add Admission</h5>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="adm-id"/>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Student Name *</label><input type="text" id="a-name" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Phone *</label><input type="text" id="a-phone" class="form-control"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Email</label><input type="email" id="a-email" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Admission Date</label><input type="date" id="a-date" class="form-control"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Course *</label><select id="a-course" class="form-select"><option value="">Select course</option></select></div>
+          <div class="form-group"><label class="form-label">Source</label>
+            <select id="a-source" class="form-select"><option value="">Select source</option><option>Webinar</option><option>Inbound Enquiry</option><option>Operations</option><option>Referral</option><option>Seminar</option><option>Affiliate</option><option>Other</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Batch</label>
+            <select id="a-batch" class="form-select"><option value="">Select batch</option></select>
+            <small style="font-size:11px;color:var(--text-secondary)">Status auto-updates based on batch dates</small>
+          </div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">Total Fee (₹)</label><input type="number" id="a-fee" class="form-control" oninput="calcBalance()"/></div>
+          <div class="form-group"><label class="form-label">Amount Paid (₹)</label><input type="number" id="a-paid" class="form-control" oninput="calcBalance()"/></div>
+          <div class="form-group"><label class="form-label">Balance (₹)</label><input type="number" id="a-balance" class="form-control" readonly style="background:var(--bg)"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Payment Mode</label><select id="a-payment" class="form-select"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option><option>EMI</option></select></div>
+          <div class="form-group"><label class="form-label">Status</label><select id="a-status" class="form-select"><option>Active</option><option>Completed</option><option>Dropped</option><option>On Hold</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">City / Area</label><input type="text" id="a-city" class="form-control" placeholder="e.g. Pune, Nashik"/></div>
+          <div class="form-group"><label class="form-label">Age</label><input type="number" id="a-age" class="form-control" placeholder="e.g. 22" min="15" max="60"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><textarea id="a-notes" class="form-control" rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-sm-o" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-primary-o" onclick="saveAdmission()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Modal -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-user-tag" style="color:var(--orange)"></i>
+        <h5 class="modal-title">Assign Lead</h5>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="assign-lead-id"/>
+        <div class="form-group"><label class="form-label">Select Agent</label><select id="assign-agent-sel" class="form-select"><option value="">Unassigned</option></select></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-sm-o" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-primary-o" onclick="saveAssign()">Assign</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-file-import" style="color:var(--orange)"></i>
+        <h5 class="modal-title">Import Leads (CSV)</h5>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="import-drop-zone" id="import-drop-zone" onclick="document.getElementById('csv-file-input').click()">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Drop CSV file here or click to browse</div>
+          <div style="font-size:12px;color:var(--text-secondary)">Required: <strong>name, phone</strong> &nbsp;|&nbsp; Optional: email, course, source</div>
+        </div>
+        <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="previewCSV(this)"/>
+        <div id="import-preview" style="display:none;margin-top:14px">
+          <div style="font-size:12.5px;font-weight:700;margin-bottom:8px" id="import-preview-label"></div>
+          <div class="table-wrap" style="max-height:240px;overflow-y:auto">
+            <table class="main-tbl" id="import-preview-table"></table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-sm-o" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-primary-o" id="import-confirm-btn" onclick="confirmImport()" disabled><i class="fa-solid fa-file-import"></i> Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Agent Modal -->
+<div class="modal fade" id="agentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-user-tie" style="color:var(--orange)"></i>
+        <h5 class="modal-title" id="agent-modal-title">Add Agent</h5>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="agent-id"/>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Name *</label><input type="text" id="ag-name" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Login Password *</label><input type="text" id="ag-password" class="form-control" placeholder="Agent sets this to login"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Phone</label><input type="text" id="ag-phone" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Email</label><input type="email" id="ag-email" class="form-control"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Role / Designation</label><input type="text" id="ag-role" class="form-control" placeholder="e.g. Counsellor"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Monthly Lead Target</label><input type="number" id="ag-tleads" class="form-control" value="50"/></div>
+          <div class="form-group"><label class="form-label">Monthly Admission Target</label><input type="number" id="ag-tadm" class="form-control" value="10"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Status</label><select id="ag-status" class="form-select"><option>Active</option><option>Inactive</option></select></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-sm-o" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-primary-o" onclick="saveAgent()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Webinar Modal -->
+<div class="modal fade" id="webinarModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-video" style="color:var(--orange)"></i>
+        <h5 class="modal-title" id="webinar-modal-title">Add Webinar</h5>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="webinar-id"/>
+        <div class="form-group"><label class="form-label">Title *</label><input type="text" id="w-title" class="form-control"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date *</label><input type="date" id="w-date" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Time</label><input type="time" id="w-time" class="form-control"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Course</label><select id="w-course" class="form-select"><option value="">General</option></select></div>
+          <div class="form-group"><label class="form-label">Platform</label><select id="w-platform" class="form-select"><option>Zoom</option><option>Google Meet</option><option>YouTube</option><option>Teams</option><option>In-person</option></select></div>
+        </div>
+        <div class="form-group"><label class="form-label">Join Link</label><input type="url" id="w-link" class="form-control"/></div>
+        <div class="form-group"><label class="form-label">Description</label><textarea id="w-desc" class="form-control" rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-sm-o" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-primary-o" onclick="saveWebinar()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Batch Modal -->
+<div class="modal fade" id="batchModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-layer-group" style="color:var(--orange)"></i>
+        <h5 class="modal-title" id="batch-modal-title">Add Batch</h5>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="batch-id"/>
+        <div class="form-group"><label class="form-label">Batch Name *</label><input type="text" id="b-name" class="form-control" placeholder="e.g. Solar Batch A - July 2025"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Course *</label><select id="b-course" class="form-select"><option value="">Select course</option></select></div>
+          <div class="form-group"><label class="form-label">Mode</label><select id="b-mode" class="form-select"><option>Online</option><option>Offline</option><option>Hybrid</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Start Date *</label><input type="date" id="b-start" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">End Date</label><input type="date" id="b-end" class="form-control"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Timing</label><input type="text" id="b-timing" class="form-control" placeholder="e.g. 10am–12pm"/></div>
+          <div class="form-group"><label class="form-label">Max Seats</label><input type="number" id="b-seats" class="form-control" value="30"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Instructor</label><input type="text" id="b-instructor" class="form-control"/></div>
+          <div class="form-group"><label class="form-label">Status</label><select id="b-status" class="form-select"><option>Upcoming</option><option>Ongoing</option><option>Completed</option><option>Cancelled</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-sm-o" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-primary-o" onclick="saveBatch()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Admin Modal -->
+<div class="modal fade" id="addAdminModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <i class="fa-solid fa-user-shield" style="color:var(--orange)"></i>
+        <h5 class="modal-title">Add Admin</h5>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Name *</label><input type="text" id="new-admin-name" class="form-control" placeholder="e.g. Rahul"/></div>
+        <div class="form-group"><label class="form-label">Password *</label><input type="text" id="new-admin-pass" class="form-control" placeholder="Set a password"/></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-sm-o" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn-primary-o" onclick="saveNewAdmin()"><i class="fa-solid fa-plus"></i> Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
