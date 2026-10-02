@@ -25,12 +25,28 @@
     </div>
     <div class="login-right">
       <h2>Sign in to Udyogwardhini CRM</h2>
-      <div class="mb-3"><label class="form-label">Username</label><input type="text" id="login-user" class="form-control"/></div>
-      <div class="mb-3"><label class="form-label">Password</label><input type="password" id="login-pass" class="form-control" onkeydown="if(event.key==='Enter')doLogin()"/></div>
-      <div class="mb-3"><label class="form-label">Login As</label>
-        <select id="login-role" class="form-select"><option value="admin">Admin</option><option value="agent">Agent</option></select>
+      <p style="font-size:12.5px;color:var(--text-secondary);margin-bottom:20px">Select your role and enter credentials to continue</p>
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" id="login-user" class="form-control" placeholder="e.g. Rohit or Komal" autocomplete="username"/>
       </div>
-      <button class="btn-primary-o w-100" style="justify-content:center;padding:10px" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <div class="input-pw-wrap">
+          <input type="password" id="login-pass" class="form-control" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password"/>
+          <button type="button" class="pw-toggle-btn" onclick="toggleLoginPassword()" title="Show/Hide Password" tabindex="-1">
+            <i class="fa-solid fa-eye" id="pw-toggle-icon"></i>
+          </button>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Login As</label>
+        <select id="login-role" class="form-select">
+          <option value="admin">Admin</option>
+          <option value="agent">Agent</option>
+        </select>
+      </div>
+      <button class="btn-primary-o w-100" style="justify-content:center;padding:11px;font-size:13.5px" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
     </div>
   </div>
 </div>
