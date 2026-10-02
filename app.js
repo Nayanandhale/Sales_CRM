@@ -13,7 +13,7 @@ let allocTab = 'unassigned';
 let leadModalDomain = '';
 
 // ── LOAD / SAVE ─────────────────────────────────
-function loadDB(){try{const d=localStorage.getItem(DB_KEY);if(d){const p=JSON.parse(d);db=Object.assign({leads:[],admissions:[],agents:[],admins:[],courses:[],webinars:[],batches:[],dailyNotes:[],settings:{orgName:'Udyogwardhini',adminName:'Admin',adminRole:'Admin',email:'',phone:''}},p);}}catch(e){console.warn(e)}}
+function loadDB(){try{const d=localStorage.getItem(DB_KEY);if(d){const p=JSON.parse(d);db=Object.assign({leads:[],admissions:[],agents:[],admins:[],courses:[],webinars:[],batches:[],dailyNotes:[],settings:{orgName:'Udyogwardhini',adminName:'Admin',adminRole:'Admin',email:'',phone:''}},p);}}catch(e){console.warn(e);}seedData();}
 function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(db));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function escHtml(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -63,31 +63,123 @@ function statusBadge(s){
 }
 
 // ── SEED DATA ────────────────────────────────────
+const DEFAULT_ADMINS = [
+  { name: 'Gerry', password: 'gerry@26' },
+  { name: 'Operations', password: 'ops@26' },
+  { name: 'Rohit', password: 'rohit@26' },
+  { name: 'Shriram_UDY', password: 'udy@2026' }
+];
+
+const DEFAULT_AGENTS = [
+  { name: 'Komal',  password: 'komal123',  role: 'Counsellor', targetLeads: 50, targetAdm: 10 },
+  { name: 'Sejal',  password: 'sejal123',  role: 'Counsellor', targetLeads: 50, targetAdm: 10 },
+  { name: 'Yogesh', password: 'yogesh123', role: 'Counsellor', targetLeads: 50, targetAdm: 10 }
+];
+
 function seedData(){
-  // Seed real agents — also runs if existing agents have no password field (old DB migration)
-  const hasPasswordAgents=(db.agents||[]).some(a=>a.password);
-  if(!db.agents||db.agents.length===0||!hasPasswordAgents){
-    db.agents=[]; // clear old phone-based agents
-    [
-      {name:'Komal',password:'komal123',role:'Counsellor',targetLeads:50,targetAdm:10},
-      {name:'Sejal',password:'sejal123',role:'Counsellor',targetLeads:50,targetAdm:10},
-      {name:'Yogesh',password:'yogesh123',role:'Counsellor',targetLeads:50,targetAdm:10},
-    ].forEach(a=>db.agents.push({id:uid(),...a,phone:'',email:'',status:'Active',createdAt:today()}));
+  if(!db.admins || !Array.isArray(db.admins)) db.admins = [];
+  // Purge any test admin created earlier - only official admins permitted
+  db.admins = db.admins.filter(a => a.name.toLowerCase() !== 'admin');
+  DEFAULT_ADMINS.forEach(defA => {
+    const existing = db.admins.find(a => a.name.toLowerCase() === defA.name.toLowerCase());
+    if(!existing){
+      db.admins.push({ id: uid(), ...defA, createdAt: today() });
+    } else if(!existing.password) {
+      existing.password = defA.password;
+    }
+  });
+
+  if(!db.agents || !Array.isArray(db.agents)) db.agents = [];
+  DEFAULT_AGENTS.forEach(defAg => {
+    const existing = db.agents.find(a => a.name.toLowerCase() === defAg.name.toLowerCase());
+    if(!existing){
+      db.agents.push({ id: uid(), ...defAg, phone: '', email: '', status: 'Active', createdAt: today() });
+    } else {
+      if(!existing.password) existing.password = defAg.password;
+      if(!existing.status) existing.status = 'Active';
+    }
+  });
+
+  seedSampleTestingData();
+
+  try{localStorage.setItem(DB_KEY,JSON.stringify(db));}catch(e){}
+}
+
+function seedSampleTestingData(){
+  const t = new Date();
+  const dStr = (offsetDays) => {
+    const d = new Date(t);
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().slice(0, 10);
+  };
+
+  // Batches
+  if(!db.batches || db.batches.length === 0){
+    db.batches = [
+      { id: 'b_edp1', name: 'EDP - Batch 14', course: 'EDP', mode: 'Offline', startDate: dStr(-28), endDate: dStr(-10), timing: '10:00 AM - 01:00 PM', seats: 35, instructor: 'Dr. Suresh Patil', status: 'Completed', createdAt: dStr(-35) },
+      { id: 'b_sol1', name: 'Solar EDP Masterclass', course: 'Solar EDP', mode: 'Hybrid', startDate: dStr(-12), endDate: dStr(6), timing: '02:00 PM - 05:00 PM', seats: 30, instructor: 'Er. Nitin Deshmukh', status: 'Ongoing', createdAt: dStr(-20) },
+      { id: 'b_exp1', name: 'Export & Import Global Batch 8', course: 'Export & Import with Global Management', mode: 'Online', startDate: dStr(-7), endDate: dStr(14), timing: '06:30 PM - 08:30 PM', seats: 40, instructor: 'Rajesh Kulkarni', status: 'Ongoing', createdAt: dStr(-18) },
+      { id: 'b_spc1', name: 'Spice Processing Workshop', course: 'Spice Processing', mode: 'Offline', startDate: dStr(8), endDate: dStr(22), timing: '10:30 AM - 04:30 PM', seats: 25, instructor: 'Mahesh Shinde', status: 'Upcoming', createdAt: dStr(-5) },
+      { id: 'b_re1',  name: 'Real Estate & Buildership', course: 'Real Estate', mode: 'Offline', startDate: dStr(15), endDate: dStr(28), timing: '09:30 AM - 01:30 PM', seats: 30, instructor: 'Adv. Sanjay More', status: 'Upcoming', createdAt: dStr(-3) },
+    ];
   }
-  // Seed real admins on first run
-  if(!db.admins||db.admins.length===0){
-    db.admins=[];
-    [
-      {name:'Gerry',password:'gerry@26'},
-      {name:'Operations',password:'ops@26'},
-      {name:'Rohit',password:'rohit@26'},
-      {name:'Shriram_UDY',password:'udy@2026'},
-    ].forEach(a=>db.admins.push({id:uid(),...a,createdAt:today()}));
+
+  // Webinars
+  if(!db.webinars || db.webinars.length === 0){
+    db.webinars = [
+      { id: 'w_sol', title: 'Solar Energy Startup & Government Subsidies 2026', date: dStr(-4), time: '11:00 AM', course: 'Solar EDP', platform: 'Zoom', link: 'https://zoom.us/j/987654321', desc: 'Guidance on project setup, Net Metering & PM Surya Ghar Yojana', createdAt: dStr(-10) },
+      { id: 'w_exp', title: 'How to Start Export-Import Business in 30 Days', date: dStr(3), time: '06:00 PM', course: 'Export & Import with Global Management', platform: 'Google Meet', link: 'https://meet.google.com/abc-defg-hij', desc: 'Step-by-step buyer finding, container booking and custom clearance', createdAt: dStr(-2) },
+      { id: 'w_spc', title: 'Spice & Food Processing Unit Setup & Licences', date: dStr(6), time: '04:00 PM', course: 'Spice Processing', platform: 'Zoom', link: 'https://zoom.us/j/123456789', desc: 'FSSAI, machinery procurement and blending secret formulations', createdAt: dStr(-1) }
+    ];
   }
-  // No random seed data - real data will be entered by users
-  if(false){
+
+  // Leads
+  if(!db.leads || db.leads.length === 0){
+    db.leads = [
+      { id: uid(), name: 'Amit Patil', phone: '9822014589', email: 'amit.patil@gmail.com', course: 'Solar EDP', source: 'Webinar', agent: 'Komal', callbackDate: dStr(1), callbackTime: '11:00', callCount: 3, remark1: 'Interested', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Has 500 sq ft rooftop, interested in solar dealership', createdAt: dStr(-10) },
+      { id: uid(), name: 'Priya Deshmukh', phone: '9765432101', email: 'priya.deshmukh@yahoo.com', course: 'Export & Import with Global Management', source: 'Social Media', agent: 'Sejal', callbackDate: dStr(0), callbackTime: '14:30', callCount: 2, remark1: 'Hot Lead', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Family into onion & grape farming, wants to export to Dubai', createdAt: dStr(-8) },
+      { id: uid(), name: 'Rahul Shinde', phone: '9423156789', email: 'rahul.s@outlook.com', course: 'Solar EDP', source: 'Google Ads', agent: 'Komal', callbackDate: '', callbackTime: '', callCount: 4, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'UPI', payAmount: '25000', notes: 'Enrolled in Solar EDP Masterclass batch', createdAt: dStr(-12) },
+      { id: uid(), name: 'Sneha Kulkarni', phone: '9890123456', email: 'sneha.k@gmail.com', course: 'Spice Processing', source: 'Inbound Enquiry', agent: 'Yogesh', callbackDate: dStr(2), callbackTime: '16:00', callCount: 1, remark1: 'Interested', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Looking to start packaged spice manufacturing in Nashik', createdAt: dStr(-5) },
+      { id: uid(), name: 'Vikas More', phone: '9921456780', email: 'vikas.more@gmail.com', course: 'Real Estate', source: 'Referral', agent: 'Yogesh', callbackDate: dStr(1), callbackTime: '10:30', callCount: 2, remark1: 'Hot Lead', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Civil engineer planning RERA agent & project advisory', createdAt: dStr(-4) },
+      { id: uid(), name: 'Pooja Jadhav', phone: '9860234567', email: 'pooja.j@hotmail.com', course: 'EDP', source: 'Webinar', agent: 'Sejal', callbackDate: '', callbackTime: '', callCount: 3, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'Net Banking', payAmount: '18000', notes: 'Admitted in EDP Batch 14, completed training', createdAt: dStr(-25) },
+      { id: uid(), name: 'Anand Gaikwad', phone: '9881345678', email: 'anand.g@gmail.com', course: 'Export & Import with Global Management', source: 'Social Media', agent: 'Komal', callbackDate: '', callbackTime: '', callCount: 3, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'UPI', payAmount: '30000', notes: 'Completed full payment for Global Export batch', createdAt: dStr(-9) },
+      { id: uid(), name: 'Swapnil Pawar', phone: '9730456789', email: 'swapnil.p@gmail.com', course: 'Spice Processing', source: 'Google Ads', agent: 'Yogesh', callbackDate: dStr(0), callbackTime: '15:00', callCount: 2, remark1: 'Interested', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Comparing machinery costs, requesting syllabus PDF', createdAt: dStr(-6) },
+      { id: uid(), name: 'Neha Joshi', phone: '9403567890', email: 'neha.joshi@gmail.com', course: 'Bakery Workshop', source: 'Inbound Enquiry', agent: 'Sejal', callbackDate: dStr(3), callbackTime: '11:30', callCount: 1, remark1: 'New', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Enquired about 3-day industrial bakery practicals', createdAt: dStr(-2) },
+      { id: uid(), name: 'Sachin Kale', phone: '9823678901', email: 'sachin.kale@yahoo.com', course: 'Solar EDP', source: 'Referral', agent: 'Komal', callbackDate: '', callbackTime: '', callCount: 2, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'UPI', payAmount: '25000', notes: 'Enrolled in ongoing Solar batch', createdAt: dStr(-11) },
+      { id: uid(), name: 'Ganesh Thombare', phone: '9970789012', email: 'ganesh.t@gmail.com', course: 'EDP', source: 'Website', agent: 'Sejal', callbackDate: dStr(1), callbackTime: '12:00', callCount: 2, remark1: 'Interested', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Needs project report guidance for PMEGP loan', createdAt: dStr(-7) },
+      { id: uid(), name: 'Sunita Wagh', phone: '9850890123', email: 'sunita.w@gmail.com', course: 'FV Processing', source: 'Social Media', agent: 'Yogesh', callbackDate: dStr(4), callbackTime: '10:00', callCount: 1, remark1: 'New', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Fruit drying unit enquiry, wants brochure on WhatsApp', createdAt: dStr(-3) },
+      { id: uid(), name: 'Rohan Mehta', phone: '9890901234', email: 'rohan.mehta@gmail.com', course: 'Export & Import with Global Management', source: 'Google Ads', agent: 'Komal', callbackDate: dStr(0), callbackTime: '17:00', callCount: 3, remark1: 'Hot Lead', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Will pay token fee by evening', createdAt: dStr(-5) },
+      { id: uid(), name: 'Deepak Chaudhari', phone: '9763012345', email: 'deepak.c@gmail.com', course: 'Real Estate', source: 'Webinar', agent: 'Yogesh', callbackDate: '', callbackTime: '', callCount: 4, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'Cheque', payAmount: '22000', notes: 'Admitted for upcoming Real Estate batch', createdAt: dStr(-4) },
+      { id: uid(), name: 'Kavita Salunkhe', phone: '9822123456', email: 'kavita.s@gmail.com', course: 'Spice Processing', source: 'Inbound Enquiry', agent: 'Sejal', callbackDate: '', callbackTime: '', callCount: 3, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'UPI', payAmount: '20000', notes: 'Seat reserved for Spice processing workshop', createdAt: dStr(-6) },
+      { id: uid(), name: 'Abhishek Raut', phone: '9867234567', email: 'abhishek.r@gmail.com', course: 'AI for Sales & Business Growth', source: 'Social Media', agent: '', callbackDate: '', callbackTime: '', callCount: 0, remark1: 'New', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Direct website form lead', createdAt: dStr(-1) },
+      { id: uid(), name: 'Pallavi Bhalerao', phone: '9890345678', email: 'pallavi.b@gmail.com', course: 'Solar EDP', source: 'Google Ads', agent: '', callbackDate: '', callbackTime: '', callCount: 0, remark1: 'New', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Inquired about subsidy schemes', createdAt: dStr(0) },
+      { id: uid(), name: 'Nilesh Sonawane', phone: '9922456789', email: 'nilesh.s@gmail.com', course: 'Export & Import with Global Management', source: 'Webinar', agent: '', callbackDate: '', callbackTime: '', callCount: 0, remark1: 'New', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Attended weekend webinar', createdAt: dStr(0) }
+    ];
   }
-  saveDB();
+
+  // Admissions
+  if(!db.admissions || db.admissions.length === 0){
+    db.admissions = [
+      { id: uid(), name: 'Rahul Shinde', phone: '9423156789', email: 'rahul.s@outlook.com', course: 'Solar EDP', batchId: 'b_sol1', date: dStr(-12), source: 'Google Ads', fee: 25000, paid: 25000, payment: 'UPI', status: 'Active', city: 'Pune', age: '28', notes: 'Full fee cleared, certificate in progress', agentName: 'Komal', createdAt: dStr(-12) },
+      { id: uid(), name: 'Sachin Kale', phone: '9823678901', email: 'sachin.kale@yahoo.com', course: 'Solar EDP', batchId: 'b_sol1', date: dStr(-11), source: 'Referral', fee: 25000, paid: 15000, payment: 'UPI', status: 'Active', city: 'Nashik', age: '32', notes: 'First installment paid, balance 10,000 due next week', agentName: 'Komal', createdAt: dStr(-11) },
+      { id: uid(), name: 'Anand Gaikwad', phone: '9881345678', email: 'anand.g@gmail.com', course: 'Export & Import with Global Management', batchId: 'b_exp1', date: dStr(-9), source: 'Social Media', fee: 30000, paid: 30000, payment: 'UPI', status: 'Active', city: 'Mumbai', age: '26', notes: 'Attending regular evening classes', agentName: 'Komal', createdAt: dStr(-9) },
+      { id: uid(), name: 'Pooja Jadhav', phone: '9860234567', email: 'pooja.j@hotmail.com', course: 'EDP', batchId: 'b_edp1', date: dStr(-25), source: 'Webinar', fee: 18000, paid: 18000, payment: 'Net Banking', status: 'Completed', city: 'Nashik', age: '24', notes: 'Completed course successfully, preparing DPR', agentName: 'Sejal', createdAt: dStr(-25) },
+      { id: uid(), name: 'Mahesh Borse', phone: '9850123987', email: 'mahesh.b@gmail.com', course: 'EDP', batchId: 'b_edp1', date: dStr(-24), source: 'Inbound Enquiry', fee: 18000, paid: 18000, payment: 'Cash', status: 'Completed', city: 'Aurangabad', age: '35', notes: 'EDP batch completed', agentName: 'Sejal', createdAt: dStr(-24) },
+      { id: uid(), name: 'Deepak Chaudhari', phone: '9763012345', email: 'deepak.c@gmail.com', course: 'Real Estate', batchId: 'b_re1', date: dStr(-4), source: 'Webinar', fee: 22000, paid: 22000, payment: 'Cheque', status: 'On Hold', city: 'Pune', age: '41', notes: 'Upcoming batch starting on 15th', agentName: 'Yogesh', createdAt: dStr(-4) },
+      { id: uid(), name: 'Kavita Salunkhe', phone: '9822123456', email: 'kavita.s@gmail.com', course: 'Spice Processing', batchId: 'b_spc1', date: dStr(-6), source: 'Inbound Enquiry', fee: 20000, paid: 10000, payment: 'UPI', status: 'On Hold', city: 'Kolhapur', age: '29', notes: 'Token 10,000 paid, balance on day 1 of workshop', agentName: 'Sejal', createdAt: dStr(-6) },
+      { id: uid(), name: 'Chetan Mahajan', phone: '9730987654', email: 'chetan.m@gmail.com', course: 'Export & Import with Global Management', batchId: 'b_exp1', date: dStr(-8), source: 'Referral', fee: 30000, paid: 30000, payment: 'Net Banking', status: 'Active', city: 'Nagpur', age: '30', notes: 'Agricultural export focus', agentName: 'Sejal', createdAt: dStr(-8) },
+      { id: uid(), name: 'Siddharth Ingle', phone: '9890876543', email: 'sid.ingle@gmail.com', course: 'Solar EDP', batchId: 'b_sol1', date: dStr(-10), source: 'Google Ads', fee: 25000, paid: 25000, payment: 'Card', status: 'Active', city: 'Nashik', age: '27', notes: 'EPC contractor trainee', agentName: 'Yogesh', createdAt: dStr(-10) }
+    ];
+  }
+
+  // Daily notes
+  if(!db.dailyNotes || db.dailyNotes.length === 0){
+    db.dailyNotes = [
+      { id: uid(), date: dStr(0), agent: 'Komal', text: 'Followed up with 14 leads for Solar batch; 2 confirmed for evening counseling call.', createdAt: dStr(0) },
+      { id: uid(), date: dStr(0), agent: 'Sejal', text: 'Conducted Export-Import batch query session. 3 leads requested fee structure.', createdAt: dStr(0) },
+      { id: uid(), date: dStr(-1), agent: 'Yogesh', text: 'Outreach to Spice Processing webinar attendees; 4 showed strong intent.', createdAt: dStr(-1) }
+    ];
+  }
 }
 
 // ── AUTO SYNC BATCH → ADMISSION STATUS ──────────
@@ -114,31 +206,98 @@ function syncBatchStatuses(){
 // ── AUTH ─────────────────────────────────────────
 function doLogin(){
   loadDB();
-  const u=document.getElementById('login-user').value.trim().toLowerCase();
-  const p=document.getElementById('login-pass').value.trim();
-  const r=document.getElementById('login-role').value;
-  if(r==='admin'){
-    // Check db.admins first (real admins), then fallback to hardcoded admin
-    const adminMatch=(db.admins||[]).find(a=>a.name.toLowerCase()===u&&a.password===p);
-    if(adminMatch){
-      currentUser={username:adminMatch.name,role:'admin',name:adminMatch.name,agentRef:null};
-      document.getElementById('login-screen').style.display='none';
-      document.getElementById('app-shell').style.display='';
-      initApp();return;
-    }
-    return toast('Invalid admin credentials','error');
+  const userInput = (document.getElementById('login-user')?.value || '').trim();
+  const u = userInput.toLowerCase();
+  const p = (document.getElementById('login-pass')?.value || '').trim();
+  const r = (document.getElementById('login-role')?.value || 'admin').toLowerCase();
+
+  if(!userInput || !p){
+    return toast('Please enter both username and password','error');
   }
-  // Agent: login with name + password (set by admin in agent tracker)
-  const agentMatch=(db.agents||[]).find(a=>a.name.trim().toLowerCase()===u&&a.password===p&&a.status==='Active');
-  if(r==='agent'&&agentMatch){
-    currentUser={username:agentMatch.name,role:'agent',name:agentMatch.name,agentRef:agentMatch};
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app-shell').style.display='';
-    initApp();return;
+
+  const nameMatches = (candidateName, searchName) => {
+    if(!candidateName || !searchName) return false;
+    const c = candidateName.toLowerCase().trim();
+    const s = searchName.toLowerCase().trim();
+    if(c === s) return true;
+    if(c.replace(/[^a-z0-9]/g, '') === s.replace(/[^a-z0-9]/g, '')) return true;
+    if((c === 'shriram_udy' || c === 'shriram') && (s === 'shriram' || s === 'shriram_udy' || s === 'udy')) return true;
+    return false;
+  };
+
+  const adminMatch = (db.admins || []).find(a => 
+    nameMatches(a.name, u) && ((a.password || '').trim() === p)
+  );
+
+  const agentMatch = (db.agents || []).find(a => 
+    nameMatches(a.name, u) && ((a.password || '').trim() === p) && (!a.status || a.status.toLowerCase() === 'active')
+  );
+
+  // Matching role selected
+  if(r === 'admin' && adminMatch){
+    currentUser = { username: adminMatch.name, role: 'admin', name: adminMatch.name, agentRef: null };
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = '';
+    initApp();
+    toast(`Welcome back, ${adminMatch.name}!`, 'success');
+    return;
   }
-  toast('Invalid credentials','error');
+
+  if(r === 'agent' && agentMatch){
+    currentUser = { username: agentMatch.name, role: 'agent', name: agentMatch.name, agentRef: agentMatch };
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = '';
+    initApp();
+    toast(`Welcome back, ${agentMatch.name}!`, 'success');
+    return;
+  }
+
+  // Auto-switch role if credentials belong to the other role
+  if(adminMatch && r === 'agent'){
+    currentUser = { username: adminMatch.name, role: 'admin', name: adminMatch.name, agentRef: null };
+    const roleEl = document.getElementById('login-role');
+    if(roleEl) roleEl.value = 'admin';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = '';
+    initApp();
+    toast(`Logged in as Admin: ${adminMatch.name}`, 'success');
+    return;
+  }
+
+  if(agentMatch && r === 'admin'){
+    currentUser = { username: agentMatch.name, role: 'agent', name: agentMatch.name, agentRef: agentMatch };
+    const roleEl = document.getElementById('login-role');
+    if(roleEl) roleEl.value = 'agent';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = '';
+    initApp();
+    toast(`Logged in as Agent: ${agentMatch.name}`, 'success');
+    return;
+  }
+
+  toast('Invalid credentials. Check username & password.', 'error');
 }
-function doLogout(){currentUser=null;document.getElementById('login-screen').style.display='';document.getElementById('app-shell').style.display='none';}
+
+function toggleLoginPassword(){
+  const p = document.getElementById('login-pass');
+  const ic = document.getElementById('pw-toggle-icon');
+  if(!p) return;
+  if(p.type === 'password'){
+    p.type = 'text';
+    if(ic){ ic.classList.remove('fa-eye'); ic.classList.add('fa-eye-slash'); }
+  } else {
+    p.type = 'password';
+    if(ic){ ic.classList.remove('fa-eye-slash'); ic.classList.add('fa-eye'); }
+  }
+}
+
+function doLogout(){
+  currentUser = null;
+  document.getElementById('login-screen').style.display = '';
+  document.getElementById('app-shell').style.display = 'none';
+  const passEl = document.getElementById('login-pass');
+  if(passEl) passEl.value = '';
+}
 
 // ── SIDEBAR ─────────────────────────────────────
 const NAV_ADMIN=[
@@ -1333,5 +1492,6 @@ function dlCSV(filename,content){const a=document.createElement('a');a.href='dat
 // ── START ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',()=>{
   loadDB();
-  document.getElementById('login-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  const userEl = document.getElementById('login-user');
+  if(userEl) userEl.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 });
