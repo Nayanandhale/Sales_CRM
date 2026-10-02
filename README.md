@@ -2,8 +2,6 @@
 
 ### Internal Sales & Admission Management System
 
-**A centralized CRM for managing leads, admissions, agents, batches, webinars, analytics, and daily operations.**
-
 ## 🧭 Quick Navigation
 
 - [✨ Overview](#-overview)
@@ -11,13 +9,6 @@
 - [📁 Project Structure](#-project-structure)
 - [🔐 Admin Portal](#-admin-portal-features)
 - [👤 Agent Portal](#-agent-portal-features)
-- [🎓 Built-in Courses](#-courses-31-built-in)
-- [🔌 API](#-api-endpoints)
-- [🗄️ Database](#️-database-schema)
-- [⚙️ Environment](#️-environment-variables)
-- [🛡️ Security](#️-security-notes-for-tech-head)
-- [🚀 Deployment](#-deployment)
-- [🤝 Support](#-support)
 
 ---
 
@@ -60,13 +51,8 @@ udyogwardhini-crm/
 ├── logo.png          ← Udyogwardhini logo
 ├── server.js         ← Node.js + Express + PostgreSQL backend
 ├── package.json      ← Node dependencies
-├── .env              ← Environment variables (never commit this)
-├── .env.example      ← Template for .env
-├── .gitignore        ← Excludes node_modules, .env, etc.
 ├── README.md         ← This file
-└── DEPLOYMENT.md     ← Step-by-step deployment guide
 ```
-
 ---
 
 ---
@@ -98,62 +84,6 @@ udyogwardhini-crm/
 | **My Leads** | Only shows leads assigned to this agent. Can add, edit leads. No delete, no assign options. Sources limited to Webinar and Inbound Enquiry. |
 | **Calendar** | Read-only view of all batches and webinars scheduled by admin. Agent's own callback dates shown in green. Click any date to see event details. |
 | **Daily Tracker** | Leads added today, admissions done today, pipeline leads, callbacks due — all for selected date. WhatsApp message counter (saved per day). Course-wise leads and admissions breakdown for selected date. Activity notes. |
-
----
-
----
-
-## 🔌 API Endpoints
-
-### Auth
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/login` | Login as admin or agent |
-
-### Collections (CRUD for all)
-All collections support GET (list), POST (create), PUT /:id (update), DELETE /:id
-
-| Collection | Endpoint |
-|------------|----------|
-| Leads | `/api/leads` |
-| Admissions | `/api/admissions` |
-| Agents | `/api/agents` |
-| Admins | `/api/admins` |
-| Courses | `/api/courses` |
-| Webinars | `/api/webinars` |
-| Batches | `/api/batches` |
-| Daily Notes | `/api/dailyNotes` |
-| Settings | `/api/settings` (GET + PUT only) |
-
-### Special Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/leads/bulk-assign` | Bulk assign leads to an agent |
-| GET | `/api/courses/all` | Base + custom courses list |
-| GET | `/api/dashboard` | Summary KPIs with date + agent filter |
-| GET | `/api/agent-performance` | All agents performance with date filter |
-| GET | `/api/analytics/locations` | Top 5 admission cities |
-| GET | `/api/analytics/age-groups` | Admissions by age bracket |
-| GET | `/api/analytics/courses` | Course-wise stats for a period |
-| GET | `/api/daily` | Daily tracker summary |
-| GET | `/api/export/:collection` | CSV export |
-| POST | `/api/batches/sync` | Force batch→admission status sync |
-| POST | `/api/reset` | Clear leads/admissions, keep agents/admins |
-| GET | `/api/health` | Server and DB health check |
-
----
-
----
-
-## 🛡️ Security Notes for Tech Head
-
-The following are known items to harden before public launch:
-
-1. 🔑 **Passwords are plain text** — implement bcrypt hashing for all passwords
-2. 🎟️ **No JWT/session tokens** — authentication is frontend-only; add server-side token validation for API security
-3. 🌐 **CORS is open** — restrict to company domain only in `server.js`
-4. 🚦 **No rate limiting** — add express-rate-limit on auth endpoints
-5. 🔒 **No HTTPS enforcement** — configure via domain/hosting (not in app code)
 
 ---
 
