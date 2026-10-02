@@ -51,10 +51,10 @@ const REAL_AGENTS = [
 ];
 
 const REAL_ADMINS = [
-      {name:'Gerry',password:'gerry@26'},
-      {name:'Operations',password:'ops@26'},
-      {name:'Rohit',password:'rohit@26'},
-      {name:'Shriram_UDY',password:'udy@2026'},
+  { name: 'Gerry', password: 'gerry@26' },
+  { name: 'Operations', password: 'ops@26' },
+  { name: 'Rohit', password: 'rohit@26' },
+  { name: 'Shriram_UDY', password: 'udy@2026' },
 ];
 
 // ── HELPERS ───────────────────────────────────────────
@@ -121,10 +121,62 @@ async function initDB() {
   const sett = settRows[0].value;
   if (!sett.orgName) {
     const defaults = {
-      orgName: 'Udyogwardhini', adminName: 'Admin', adminRole: 'Super Admin',
-      email: '', phone: '', domain: '', driveLink: ''
+      orgName: 'Udyogwardhini', adminName: 'Rohit', adminRole: 'Super Admin',
+      email: 'info@udyogwardhini.com', phone: '', domain: 'Udyogwardhini', driveLink: ''
     };
     await pool.query(`UPDATE crm_store SET value=$1 WHERE key='settings'`, [JSON.stringify(defaults)]);
+  }
+
+  // Seed sample testing data if leads are empty
+  const { rows: leadRows } = await pool.query(`SELECT value FROM crm_store WHERE key='leads'`);
+  if (!leadRows[0].value.length) {
+    const dStr = (offsetDays) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      return d.toISOString().slice(0, 10);
+    };
+
+    const sampleBatches = [
+      { id: 'b_edp1', name: 'EDP - Batch 14', course: 'EDP', mode: 'Offline', startDate: dStr(-28), endDate: dStr(-10), timing: '10:00 AM - 01:00 PM', seats: 35, instructor: 'Dr. Suresh Patil', status: 'Completed', createdAt: dStr(-35) },
+      { id: 'b_sol1', name: 'Solar EDP Masterclass', course: 'Solar EDP', mode: 'Hybrid', startDate: dStr(-12), endDate: dStr(6), timing: '02:00 PM - 05:00 PM', seats: 30, instructor: 'Er. Nitin Deshmukh', status: 'Ongoing', createdAt: dStr(-20) },
+      { id: 'b_exp1', name: 'Export & Import Global Batch 8', course: 'Export & Import with Global Management', mode: 'Online', startDate: dStr(-7), endDate: dStr(14), timing: '06:30 PM - 08:30 PM', seats: 40, instructor: 'Rajesh Kulkarni', status: 'Ongoing', createdAt: dStr(-18) },
+      { id: 'b_spc1', name: 'Spice Processing Workshop', course: 'Spice Processing', mode: 'Offline', startDate: dStr(8), endDate: dStr(22), timing: '10:30 AM - 04:30 PM', seats: 25, instructor: 'Mahesh Shinde', status: 'Upcoming', createdAt: dStr(-5) },
+      { id: 'b_re1',  name: 'Real Estate & Buildership', course: 'Real Estate', mode: 'Offline', startDate: dStr(15), endDate: dStr(28), timing: '09:30 AM - 01:30 PM', seats: 30, instructor: 'Adv. Sanjay More', status: 'Upcoming', createdAt: dStr(-3) },
+    ];
+    await pool.query(`UPDATE crm_store SET value=$1 WHERE key='batches'`, [JSON.stringify(sampleBatches)]);
+
+    const sampleWebinars = [
+      { id: 'w_sol', title: 'Solar Energy Startup & Government Subsidies 2026', date: dStr(-4), time: '11:00 AM', course: 'Solar EDP', platform: 'Zoom', link: 'https://zoom.us/j/987654321', desc: 'Guidance on project setup, Net Metering & PM Surya Ghar Yojana', createdAt: dStr(-10) },
+      { id: 'w_exp', title: 'How to Start Export-Import Business in 30 Days', date: dStr(3), time: '06:00 PM', course: 'Export & Import with Global Management', platform: 'Google Meet', link: 'https://meet.google.com/abc-defg-hij', desc: 'Step-by-step buyer finding, container booking and custom clearance', createdAt: dStr(-2) },
+      { id: 'w_spc', title: 'Spice & Food Processing Unit Setup & Licences', date: dStr(6), time: '04:00 PM', course: 'Spice Processing', platform: 'Zoom', link: 'https://zoom.us/j/123456789', desc: 'FSSAI, machinery procurement and blending secret formulations', createdAt: dStr(-1) }
+    ];
+    await pool.query(`UPDATE crm_store SET value=$1 WHERE key='webinars'`, [JSON.stringify(sampleWebinars)]);
+
+    const sampleLeads = [
+      { id: uid(), name: 'Amit Patil', phone: '9822014589', email: 'amit.patil@gmail.com', course: 'Solar EDP', source: 'Webinar', agent: 'Komal', callbackDate: dStr(1), callbackTime: '11:00', callCount: 3, remark1: 'Interested', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Has 500 sq ft rooftop, interested in solar dealership', createdAt: dStr(-10) },
+      { id: uid(), name: 'Priya Deshmukh', phone: '9765432101', email: 'priya.deshmukh@yahoo.com', course: 'Export & Import with Global Management', source: 'Social Media', agent: 'Sejal', callbackDate: dStr(0), callbackTime: '14:30', callCount: 2, remark1: 'Hot Lead', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Family into onion & grape farming, wants to export to Dubai', createdAt: dStr(-8) },
+      { id: uid(), name: 'Rahul Shinde', phone: '9423156789', email: 'rahul.s@outlook.com', course: 'Solar EDP', source: 'Google Ads', agent: 'Komal', callbackDate: '', callbackTime: '', callCount: 4, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'UPI', payAmount: '25000', notes: 'Enrolled in Solar EDP Masterclass batch', createdAt: dStr(-12) },
+      { id: uid(), name: 'Sneha Kulkarni', phone: '9890123456', email: 'sneha.k@gmail.com', course: 'Spice Processing', source: 'Inbound Enquiry', agent: 'Yogesh', callbackDate: dStr(2), callbackTime: '16:00', callCount: 1, remark1: 'Interested', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Looking to start packaged spice manufacturing in Nashik', createdAt: dStr(-5) },
+      { id: uid(), name: 'Vikas More', phone: '9921456780', email: 'vikas.more@gmail.com', course: 'Real Estate', source: 'Referral', agent: 'Yogesh', callbackDate: dStr(1), callbackTime: '10:30', callCount: 2, remark1: 'Hot Lead', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Civil engineer planning RERA agent & project advisory', createdAt: dStr(-4) },
+      { id: uid(), name: 'Pooja Jadhav', phone: '9860234567', email: 'pooja.j@hotmail.com', course: 'EDP', source: 'Webinar', agent: 'Sejal', callbackDate: '', callbackTime: '', callCount: 3, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'Net Banking', payAmount: '18000', notes: 'Admitted in EDP Batch 14, completed training', createdAt: dStr(-25) },
+      { id: uid(), name: 'Anand Gaikwad', phone: '9881345678', email: 'anand.g@gmail.com', course: 'Export & Import with Global Management', source: 'Social Media', agent: 'Komal', callbackDate: '', callbackTime: '', callCount: 3, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'UPI', payAmount: '30000', notes: 'Completed full payment for Global Export batch', createdAt: dStr(-9) },
+      { id: uid(), name: 'Swapnil Pawar', phone: '9730456789', email: 'swapnil.p@gmail.com', course: 'Spice Processing', source: 'Google Ads', agent: 'Yogesh', callbackDate: dStr(0), callbackTime: '15:00', callCount: 2, remark1: 'Interested', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Comparing machinery costs, requesting syllabus PDF', createdAt: dStr(-6) },
+      { id: uid(), name: 'Neha Joshi', phone: '9403567890', email: 'neha.joshi@gmail.com', course: 'Bakery Workshop', source: 'Inbound Enquiry', agent: 'Sejal', callbackDate: dStr(3), callbackTime: '11:30', callCount: 1, remark1: 'New', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Enquired about 3-day industrial bakery practicals', createdAt: dStr(-2) },
+      { id: uid(), name: 'Sachin Kale', phone: '9823678901', email: 'sachin.kale@yahoo.com', course: 'Solar EDP', source: 'Referral', agent: 'Komal', callbackDate: '', callbackTime: '', callCount: 2, remark1: 'Admitted', remark2: '', remark3: '', payMode: 'UPI', payAmount: '25000', notes: 'Enrolled in ongoing Solar batch', createdAt: dStr(-11) },
+      { id: uid(), name: 'Abhishek Raut', phone: '9867234567', email: 'abhishek.r@gmail.com', course: 'AI for Sales & Business Growth', source: 'Social Media', agent: '', callbackDate: '', callbackTime: '', callCount: 0, remark1: 'New', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Direct website form lead', createdAt: dStr(-1) },
+      { id: uid(), name: 'Pallavi Bhalerao', phone: '9890345678', email: 'pallavi.b@gmail.com', course: 'Solar EDP', source: 'Google Ads', agent: '', callbackDate: '', callbackTime: '', callCount: 0, remark1: 'New', remark2: '', remark3: '', payMode: '', payAmount: '', notes: 'Inquired about subsidy schemes', createdAt: dStr(0) }
+    ];
+    await pool.query(`UPDATE crm_store SET value=$1 WHERE key='leads'`, [JSON.stringify(sampleLeads)]);
+
+    const sampleAdmissions = [
+      { id: uid(), name: 'Rahul Shinde', phone: '9423156789', email: 'rahul.s@outlook.com', course: 'Solar EDP', batchId: 'b_sol1', date: dStr(-12), source: 'Google Ads', fee: 25000, paid: 25000, payment: 'UPI', status: 'Active', city: 'Pune', age: '28', notes: 'Full fee cleared', agentName: 'Komal', createdAt: dStr(-12) },
+      { id: uid(), name: 'Sachin Kale', phone: '9823678901', email: 'sachin.kale@yahoo.com', course: 'Solar EDP', batchId: 'b_sol1', date: dStr(-11), source: 'Referral', fee: 25000, paid: 15000, payment: 'UPI', status: 'Active', city: 'Nashik', age: '32', notes: 'First installment paid', agentName: 'Komal', createdAt: dStr(-11) },
+      { id: uid(), name: 'Anand Gaikwad', phone: '9881345678', email: 'anand.g@gmail.com', course: 'Export & Import with Global Management', batchId: 'b_exp1', date: dStr(-9), source: 'Social Media', fee: 30000, paid: 30000, payment: 'UPI', status: 'Active', city: 'Mumbai', age: '26', notes: 'Regular classes', agentName: 'Komal', createdAt: dStr(-9) },
+      { id: uid(), name: 'Pooja Jadhav', phone: '9860234567', email: 'pooja.j@hotmail.com', course: 'EDP', batchId: 'b_edp1', date: dStr(-25), source: 'Webinar', fee: 18000, paid: 18000, payment: 'Net Banking', status: 'Completed', city: 'Nashik', age: '24', notes: 'Completed course', agentName: 'Sejal', createdAt: dStr(-25) },
+      { id: uid(), name: 'Deepak Chaudhari', phone: '9763012345', email: 'deepak.c@gmail.com', course: 'Real Estate', batchId: 'b_re1', date: dStr(-4), source: 'Webinar', fee: 22000, paid: 22000, payment: 'Cheque', status: 'On Hold', city: 'Pune', age: '41', notes: 'Starting on 15th', agentName: 'Yogesh', createdAt: dStr(-4) }
+    ];
+    await pool.query(`UPDATE crm_store SET value=$1 WHERE key='admissions'`, [JSON.stringify(sampleAdmissions)]);
+    console.log('✅ Testing data seeded');
   }
 
   console.log('✅ Database initialised');
@@ -247,21 +299,27 @@ app.post('/api/auth/login', async (req, res) => {
     const uname = username.trim().toLowerCase();
     const pass  = password.trim();
 
-    if (role === 'admin') {
+    const nameMatches = (cand, target) => {
+      const c = (cand || '').toLowerCase().trim();
+      const t = (target || '').toLowerCase().trim();
+      return c === t || c.replace(/[^a-z0-9]/g, '') === t.replace(/[^a-z0-9]/g, '');
+    };
+
+    if (role === 'admin' || !role) {
       const admins = await getCollection('admins');
-      const match  = admins.find(a => a.name.toLowerCase() === uname && a.password === pass);
+      const match  = admins.find(a => nameMatches(a.name, uname) && (a.password || '').trim() === pass);
       if (match) return res.json({ success: true, user: { username: match.name, name: match.name, role: 'admin' } });
-      return res.status(401).json({ success: false, error: 'Invalid admin credentials' });
+      if (role === 'admin') return res.status(401).json({ success: false, error: 'Invalid admin credentials' });
     }
 
-    if (role === 'agent') {
+    if (role === 'agent' || !role) {
       const agents = await getCollection('agents');
-      const match  = agents.find(a => a.name.trim().toLowerCase() === uname && a.password === pass && a.status === 'Active');
+      const match  = agents.find(a => nameMatches(a.name, uname) && (a.password || '').trim() === pass && (!a.status || a.status === 'Active'));
       if (match) return res.json({ success: true, user: { username: match.name, name: match.name, role: 'agent', agentRef: match } });
-      return res.status(401).json({ success: false, error: 'Invalid agent credentials' });
+      if (role === 'agent') return res.status(401).json({ success: false, error: 'Invalid agent credentials' });
     }
 
-    res.status(400).json({ success: false, error: 'Invalid role' });
+    res.status(401).json({ success: false, error: 'Invalid credentials' });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -475,11 +533,10 @@ app.get('/api/health', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── SERVE FRONTEND (production) ───────────────────────
-// Uncomment if you want Node.js to serve index.html directly
-// const path = require('path');
-// app.use(express.static(path.join(__dirname, 'public')));
-// app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+// ── SERVE FRONTEND ────────────────────────────────────
+const path = require('path');
+app.use(express.static(__dirname));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // ── START ─────────────────────────────────────────────
 async function start() {
